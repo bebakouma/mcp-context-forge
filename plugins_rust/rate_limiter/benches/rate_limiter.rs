@@ -125,7 +125,7 @@ fn bench_fixed_window_hot_counter(c: &mut Criterion) {
         b.iter(|| {
             iteration += 1;
             // Reset the window every LIMIT iterations to prevent permanent blocking
-            if iteration % LIMIT == 0 {
+            if iteration.is_multiple_of(LIMIT) {
                 handle.advance_secs(61);
             }
             store.check_and_increment(

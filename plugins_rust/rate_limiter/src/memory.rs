@@ -372,7 +372,7 @@ fn token_bucket(
         let tokens_needed_milli = 1000u128.saturating_sub(*tokens_milli as u128);
         let nanos_until_token =
             (tokens_needed_milli * window_nanos as u128 / (limit as u128 * 1000)).max(1);
-        let retry_after = (nanos_until_token / 1_000_000_000).max(1) as i64;
+        let retry_after = nanos_until_token.div_ceil(1_000_000_000).max(1) as i64;
         let reset_timestamp = now_unix + retry_after;
         DimResult {
             allowed: false,
