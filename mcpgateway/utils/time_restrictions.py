@@ -11,9 +11,8 @@ on API tokens, ensuring tokens can only be used during specified time windows.
 
 # Standard
 from datetime import datetime
-from datetime import time as dt_time
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 # Third-Party
 from fastapi import HTTPException, status
