@@ -2,7 +2,7 @@
 """Location: ./mcpgateway/utils/time_restrictions.py
 Copyright 2025
 SPDX-License-Identifier: Apache-2.0
-Authors: Mihai Criveti
+Authors: Sebastian Iozu
 
 Time restriction validation utilities for token access control.
 This module provides functions to validate time-based access restrictions
@@ -28,11 +28,11 @@ VALID_DAYS = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
 
 def validate_time_restrictions(payload: Dict[str, Any]) -> None:
     """Validate time restrictions from JWT token payload.
-    
+
     Checks if the current time falls within the allowed time windows and days
     specified in the token's time_restrictions. Raises HTTPException if the
     token is being used outside of its allowed time periods.
-    
+
     Time restrictions format in JWT payload:
     {
         "scopes": {
@@ -44,13 +44,13 @@ def validate_time_restrictions(payload: Dict[str, Any]) -> None:
             }
         }
     }
-    
+
     Args:
         payload: Decoded JWT payload containing time_restrictions in scopes
-        
+
     Raises:
         HTTPException: 403 if current time is outside allowed windows
-        
+
     Examples:
         >>> payload = {
         ...     "sub": "user@example.com",
@@ -70,17 +70,17 @@ def validate_time_restrictions(payload: Dict[str, Any]) -> None:
     scopes = payload.get("scopes", {})
     if not isinstance(scopes, dict):
         return  # No restrictions to validate
-    
+
     time_restrictions = scopes.get("time_restrictions", {})
     if not time_restrictions or not isinstance(time_restrictions, dict):
         return  # No time restrictions configured
-    
+
     # Get restriction parameters
     start_time_str = time_restrictions.get("start_time")
     end_time_str = time_restrictions.get("end_time")
     timezone_str = time_restrictions.get("timezone", "UTC")
     allowed_days = time_restrictions.get("days", [])
-    
+
     # If no restrictions are actually set, allow access
     if not (start_time_str or end_time_str or allowed_days):
         return
@@ -96,7 +96,7 @@ def validate_time_restrictions(payload: Dict[str, Any]) -> None:
                     "error_type": "invalid_day_names",
                     "invalid_days": list(invalid_days),
                     "user": payload.get("sub"),
-                }
+                },
             )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -109,11 +109,11 @@ def validate_time_restrictions(payload: Dict[str, Any]) -> None:
     except Exception as e:
         logger.warning(f"Invalid timezone in time_restrictions: {timezone_str}, falling back to UTC. Error: {e}")
         tz = pytz.UTC
-    
+
     now = datetime.now(tz)
     current_day = now.strftime("%A")  # e.g., "Monday", "Tuesday", etc.
     current_time = now.time()
-    
+
     # Check day restriction
     if allowed_days and current_day not in allowed_days:
         logger.warning(
@@ -124,13 +124,13 @@ def validate_time_restrictions(payload: Dict[str, Any]) -> None:
                 "current_day": current_day,
                 "allowed_days": allowed_days,
                 "user": payload.get("sub"),
-            }
+            },
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Token access is restricted to specific days. Current day: {current_day}. Allowed days: {', '.join(allowed_days)}",
         )
-    
+
     # Check time range restriction
     if start_time_str and end_time_str:
         try:
@@ -157,7 +157,7 @@ def validate_time_restrictions(payload: Dict[str, Any]) -> None:
 
             if end_time is None:
                 raise ValueError(f"Invalid end_time format: {end_time_str}")
-            
+
             # Handle time ranges that cross midnight
             if start_time <= end_time:
                 # Normal range (e.g., 09:00 - 17:00)
@@ -165,7 +165,7 @@ def validate_time_restrictions(payload: Dict[str, Any]) -> None:
             else:
                 # Range crosses midnight (e.g., 22:00 - 06:00)
                 time_allowed = current_time >= start_time or current_time <= end_time
-            
+
             if not time_allowed:
                 logger.warning(
                     f"Token access denied: current time {current_time.strftime('%H:%M')} outside allowed range {start_time_str} - {end_time_str}",
@@ -177,7 +177,7 @@ def validate_time_restrictions(payload: Dict[str, Any]) -> None:
                         "end_time": end_time_str,
                         "timezone": timezone_str,
                         "user": payload.get("sub"),
-                    }
+                    },
                 )
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
@@ -192,7 +192,7 @@ def validate_time_restrictions(payload: Dict[str, Any]) -> None:
                     "start_time": start_time_str,
                     "end_time": end_time_str,
                     "user": payload.get("sub"),
-                }
+                },
             )
             # SECURITY: Fail closed - deny access on parsing errors to prevent bypass
             raise HTTPException(
